@@ -1,0 +1,870 @@
+.data
+	# display
+	displayAddress: .word 0x10008000
+	
+	# frog
+	frog_X: .word 0x000E
+	frog_Y: .word 0x001C
+	frog_X_start: .word 0x000E
+ 	frog_Y_start: .word 0x001C
+ 	live_frog_color: .word 0x8b8970
+ 	dead_frog_color: .word 0xe066ff 
+ 	lives: .word 0x0003
+ 	
+ 	# vehicle
+ 	first_vehicle_row: .space 512
+	second_vehicle_row: .space 512
+ 	first_vehicle_row_counter: .word 0x0000
+ 	second_vehicle_row_counter: .word 0x0000
+	vehicle_color: 0xee2c2c
+	
+	# water
+	first_water_row: .space 512
+	second_water_row: .space 512
+ 	first_water_row_counter: .word 0x0000
+ 	second_water_row_counter: .word 0x0000
+ 	water_color: 0xb0e2ff
+ 	
+ 	# constants
+ 	seventy_five: .word 0x4B
+ 	sixty: .word 0x3C
+ 	forty_five: .word 0x2D
+	thirty: .word 0x1E
+ 	no_collision: .word 0x000001	
+ 	score: .word 0x000000	
+	space: .byte ' '
+.text
+
+START:	
+################################## update score ##################################
+ 	li $t0, 0
+ 	sw $t0, score
+
+ 	li $v0, 1
+ 	lw $a0, score
+ 	syscall
+ 	
+ 	li $v0, 4
+ 	la $a0, space
+ 	syscall 
+################################## load first vehical row ##################################	
+load_first_vehicle_row:
+	lw   $t0, displayAddress
+	lw   $t1, vehicle_color # red
+	li   $t2, 0x000000 # black
+	
+	la  $t3, first_vehicle_row
+	add $t9, $t3, $zero 
+	 
+	add  $t7, $zero, $zero
+	addi $t8, $zero, 4
+	
+load_first_vehicle_row_loop:
+	beq $t8, $t7, load_first_vehicle_row_end
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	addi $t7, $t7, 1
+	j load_first_vehicle_row_loop	
+load_first_vehicle_row_end:
+
+	
+################################## load second vehicle row ##################################
+load_second_vehicle_row: 	
+	lw   $t0, displayAddress
+	li   $t1, 0x000000 # black
+	lw   $t2, vehicle_color
+	
+	la  $t3, second_vehicle_row
+	add $t9, $t3, $zero 
+	 
+	add  $t7, $zero, $zero
+	addi $t8, $zero, 4
+	
+load_second_vehicle_row_loop:
+	beq $t8, $t7, load_second_vehicle_row_end
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	addi $t7, $t7, 1
+	j load_second_vehicle_row_loop	
+load_second_vehicle_row_end:
+
+	
+################################## load first water row ##################################
+load_first_water_row: 	
+	lw   $t0, displayAddress
+	li   $t1, 0xcd6600
+	lw   $t2, water_color # blue
+	
+	la  $t3, first_water_row
+	add $t9, $t3, $zero 
+	 
+	add  $t7, $zero, $zero
+	addi $t8, $zero, 4
+	
+load_first_water_row_loop:
+	beq $t8, $t7, load_first_water_row_end
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	addi $t7, $t7, 1
+	j load_first_water_row_loop	
+load_first_water_row_end:
+
+
+	
+################################## load second water row ##################################
+load_second_water_row: 	
+	lw   $t0, displayAddress
+	lw   $t1, water_color # blue
+	li   $t2, 0xcd6600
+	
+	
+	la  $t3, second_water_row
+	add $t9, $t3, $zero
+	 
+	add  $t7, $zero, $zero
+	addi $t8, $zero, 4
+	
+load_second_water_row_loop:
+	beq $t8, $t7, load_second_water_row_end
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t1, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	add $a0, $t9, $zero
+	add $a1, $t2, $zero
+	jal fill_eight_pixels
+	
+	addi $t9, $t9, 32
+	addi $t7, $t7, 1
+	j load_second_water_row_loop	
+load_second_water_row_end:
+
+
+
+
+######################################################################################################
+############################################# LOOP START #############################################
+######################################################################################################
+LOOP:	
+
+################################## move the frog ##################################
+keystroke_detection:
+	lw $t8, 0xffff0000
+ 	bne $t8, 1, draw_3_safe_areas
+ 	# sound effect
+ 	li $v0, 33
+ 	li $a0, 70
+ 	li $a1, 20
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+ 
+ 	lw $t2, 0xffff0004
+	beq $t2, 0x61, respond_to_A
+	beq $t2, 0x64, respond_to_D
+ 	beq $t2, 0x77, respond_to_W 
+ 	beq $t2, 0x73, respond_to_S  
+	j draw_3_safe_areas
+	
+respond_to_A:
+ 	lw $t3, frog_X
+ 	addi $t3, $t3, -1
+ 	sw $t3, frog_X
+ 	add $t3, $zero, $zero
+ 	j draw_3_safe_areas
+ 
+respond_to_W:
+ 	lw $t1, frog_Y
+ 	addi $t1, $t1, -1
+ 	sw $t1, frog_Y
+ 	add $t1, $zero, $zero
+ 	j draw_3_safe_areas
+
+respond_to_S:
+ 	lw $t1, frog_Y
+ 	addi $t1, $t1, 1
+ 	sw $t1, frog_Y
+ 	add $t1, $zero, $zero
+ 	j draw_3_safe_areas
+
+respond_to_D:
+ 	lw $t3, frog_X
+ 	addi $t3, $t3 1
+ 	sw $t3, frog_X
+ 	add $t3, $zero, $zero
+ 	j draw_3_safe_areas
+ 	
+ 
+################################## draw 3 safe areas ##################################
+draw_3_safe_areas:
+	lw $t0, displayAddress 
+
+	
+	addi $a0, $zero, 0 
+	addi $a1, $zero, 256
+	li $a2, 0x00ff00 # green   
+	jal  draw_rect
+	
+	addi $a0, $zero, 512
+	addi $a1, $zero, 128 
+	li $a2, 0xcdad00 # ground color
+	jal  draw_rect
+	
+	addi $a0, $zero, 896
+	addi $a1, $zero, 128
+	li $a2, 0x00ff00 # green
+	jal  draw_rect
+	
+	
+################################## draw lives ##################################
+draw_lives:
+ 	lw $t0, displayAddress
+
+ 	lw $t1, lives
+ 	li $t2, 0x0001
+ 	li $t3, 0x0002
+
+ 	beq $t1, $t2, draw_one_live
+ 	beq $t1, $t3, draw_two_lives
+
+ 	addi $a0, $zero, 37
+ 	addi $a1, $zero, 1
+ 	li   $a2, 0xff4500
+ 	jal draw_rect
+
+draw_two_lives:
+ 	addi $a0, $zero, 35
+ 	addi $a1, $zero, 1
+ 	li   $a2, 0xff4500
+ 	jal draw_rect
+
+draw_one_live:	
+ 	addi $a0, $zero, 33
+ 	addi $a1, $zero, 1
+ 	li   $a2, 0xff4500
+ 	jal draw_rect
+
+
+################################## draw vehicle and water rows ##################################
+draw_first_vehicle_row:
+	add $a0, $zero, 640
+	la  $a1, first_vehicle_row
+	jal draw_a_row
+	
+draw_second_vehicle_row:
+	add $a0, $zero, 768
+	la  $a1, second_vehicle_row
+	jal draw_a_row
+
+draw_first_water_row:
+	add $a0, $zero, 256
+	la  $a1, first_water_row
+	jal draw_a_row 
+	
+draw_second_water_row:
+	add $a0, $zero, 384
+	la  $a1, second_water_row
+	jal draw_a_row		
+	
+
+################################## check whether to update rows ##################################
+check_update_rows:
+check_update_first_vehicle_row:
+ 	lw $t0, sixty     # t0 = 60
+ 	lw $t1, first_vehicle_row_counter
+ 	beq $t1, $t0, update_first_vehicle_row   # check if fvrmc = 60
+ 	# if not update memory, we increment the movement counter
+ 	lw $t0, first_vehicle_row_counter
+ 	addi $t0, $t0, 1
+ 	sw $t0, first_vehicle_row_counter 
+
+check_update_first_water_row:
+ 	lw $t0, thirty     # t0 = 30
+ 	lw $t1, first_water_row_counter
+ 	beq $t1, $t0, update_first_water_row   # check if flrmc = 30
+ 	# if not update memory, we increment the movement counter
+ 	lw $t0, first_water_row_counter
+ 	addi $t0, $t0, 1
+ 	sw $t0, first_water_row_counter
+
+check_update_second_vehicle_row:
+ 	lw $t0, seventy_five    # t0 = 75
+ 	lw $t1, second_vehicle_row_counter
+ 	beq $t1, $t0, update_second_vehicle_row   # check if flrmc = 30
+ 	# if not update memory, we increment the movement counter
+ 	lw $t0, second_vehicle_row_counter
+ 	addi $t0, $t0, 1
+ 	sw $t0, second_vehicle_row_counter
+
+check_update_second_water_row:
+ 	lw $t0, forty_five    # t0 = 45
+ 	lw $t1, second_water_row_counter
+ 	beq $t1, $t0, update_second_water_row   # check if flrmc = 30
+ 	# if not update memory, we increment the movement counter
+ 	lw $t0, second_water_row_counter
+ 	addi $t0, $t0, 1
+ 	sw $t0, second_water_row_counter
+ 	
+ 	j detect_collision
+
+	
+################################## update rows memory ##################################
+update_first_vehicle_row:
+	la $t1, first_vehicle_row
+	addi $a0, $t1, 0
+	jal move_memory_right
+	la $t1, first_vehicle_row
+	addi $a0, $t1, 128
+	jal move_memory_right
+	la $t1, first_vehicle_row
+	addi $a0, $t1, 256
+	jal move_memory_right
+	la $t1, first_vehicle_row
+	addi $a0, $t1, 384
+	jal move_memory_right
+	sw $zero, first_vehicle_row_counter # set first_vehicle_row_counter = 0
+ 	j check_update_rows
+	
+update_first_water_row:
+	la $t1, first_water_row
+	addi $a0, $t1, 0
+	jal move_memory_right
+	la $t1, first_water_row
+	addi $a0, $t1, 128
+	jal move_memory_right
+	la $t1, first_water_row
+	addi $a0, $t1, 256
+	jal move_memory_right
+	la $t1, first_water_row
+	addi $a0, $t1, 384
+	jal move_memory_right	
+	sw $zero, first_water_row_counter # set first_water_row_counter = 0
+ 	j check_update_rows
+
+update_second_vehicle_row:
+	la $t1, second_vehicle_row
+	addi $a0, $t1, 0
+	jal move_memory_left
+	la $t1, second_vehicle_row
+	addi $a0, $t1, 128
+	jal move_memory_left
+	la $t1, second_vehicle_row
+	addi $a0, $t1, 256
+	jal move_memory_left
+	la $t1, second_vehicle_row
+	addi $a0, $t1, 384
+	jal move_memory_left
+	sw $zero, second_vehicle_row_counter # set second_vehicle_row_counter = 0
+ 	j check_update_rows
+
+update_second_water_row:
+	la $t1, second_water_row
+	addi $a0, $t1, 0
+	jal move_memory_left
+	la $t1, second_water_row
+	addi $a0, $t1, 128
+	jal move_memory_left
+	la $t1, second_water_row
+	addi $a0, $t1, 256
+	jal move_memory_left
+	la $t1, second_water_row
+	addi $a0, $t1, 384
+	jal move_memory_left
+	sw $zero, second_water_row_counter # set second_water_row_counter = 0
+ 	j check_update_rows
+	
+
+################################## detect-collision ##################################
+detect_collision:
+ 	lw    $a1, vehicle_color
+ 	lw    $a2, water_color
+
+ 	lw    $t0, displayAddress # $t0 stores the base address for display
+ 	lw    $t2, frog_X	  # $t2 stores x value of frog in 32*32 table
+ 	lw    $t3, frog_Y	  # $t3 stores y value of frog in 32*32 table
+
+ 	sll   $t4, $t3, 5  	 
+ 	# left-top-corner
+ 	add   $t4, $t4, $t2       # t4 = frog_y * 32 + 14 (current address in 32*32)
+ 	sll   $t5, $t4, 2         # t5 is the offset in mips = 4 * t4
+ 	add   $t6, $t5, $t0  	  # t6 is the address in mips
+ 	lw    $t1, 0($t6)
+ 	add   $a0, $t1, $zero        	# set-up color left-corner-pos of frog
+ 	jal   reset_collision_detection
+
+ 	# right-top-corner
+ 	addi  $t7, $t4, 3
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0 
+ 	lw    $t1, 0($t6)
+ 	add   $a0, $t1, $zero          # set-up color
+ 	jal   reset_collision_detection
+
+ 	# left-down-corner
+ 	addi  $t7, $t4, 96  
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0
+ 	lw    $t1, 0($t6)
+ 	add   $a0, $t1, $zero          # set-up color
+ 	jal   reset_collision_detection
+
+ 	# right-down-corner
+ 	addi  $t7, $t4, 99   
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0 
+ 	lw    $t1, 0($t6)
+ 	add   $a0, $t1, $zero       # set-up color
+ 	jal   reset_collision_detection
+
+	
+################################## draw frog ##################################	
+ 	lw $t1, no_collision
+ 	addi $t2, $zero, 1
+ 	beq $t1, $t2, normal_frog_draw
+ 
+reset_frog_draw:
+ 	lw $a1, dead_frog_color
+ 	jal draw_frog
+ 	
+ 	li $v0, 32
+ 	li $a0, 1000
+ 	syscall
+ 	
+ 	j frog_end
+
+normal_frog_draw:
+ 	lw $a1, live_frog_color
+ 	jal draw_frog
+
+frog_end:
+	
+
+################################## deal with collision ##################################
+deal_with_collision:
+ 	lw  $t1, no_collision
+ 	add $t2, $zero, $zero
+ 	bne $t1, $t2 deal_with_collision_end   # jump over the body to the end if no collision
+ 	
+ 	# sound effect
+ 	li $v0, 33
+ 	li $a0, 40
+ 	li $a1, 300
+ 	li $a2, 1
+ 	li $a3, 100
+ 	syscall
+
+	jal reset_frog
+
+decrement_live:
+ 	lw $t3, lives
+ 	addi $t3, $t3, -1
+ 	sw $t3, lives
+
+ 	# set back to no collison
+ 	addi $t5, $zero, 1
+ 	sw $t5, no_collision
+ 	
+ 	beq $t3, $zero, detect_retry
+deal_with_collision_end:	
+	
+
+################################## draw goal region (and reset frog) ##################################
+ 	lw $t1, frog_Y
+ 	addi $t2, $zero, 4
+ 	bne $t1, $t2, draw_goal_region_end
+
+draw_goal_region:
+ 	li $v0, 32       # sleep for a second
+ 	li $a0, 500
+ 	syscall
+
+ 	lw $t0, displayAddress
+ 	addi $a0, $zero, 0
+ 	addi $a1, $zero, 256
+ 	li $a2, 0xffa500     
+ 	jal  draw_rect
+
+ 	# sound effect
+ 	li $v0, 33
+ 	li $a0, 40
+ 	li $a1, 400
+ 	li $a2, 60
+ 	li $a3, 127
+ 	syscall 
+
+ 	li $v0, 33
+ 	li $a0, 50
+ 	li $a1, 400
+ 	li $a2, 60
+ 	li $a3, 127
+ 	syscall 
+
+ 	li $v0, 33
+ 	li $a0, 60
+ 	li $a1, 400
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+
+ 	li $v0, 33
+ 	li $a0, 70
+ 	li $a1, 400
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+
+ 	li $v0, 33
+ 	li $a0, 80
+ 	li $a1, 400
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+
+ 	# add 100 to score, and print out the score
+ 	lw $s1, score
+ 	addi $s1, $s1, 100
+ 	sw $s1, score
+
+ 	li $v0, 1
+ 	lw $a0, score
+ 	syscall
+ 	
+ 	li $v0, 4
+ 	la $a0, space
+ 	syscall 
+
+ 	li $v0, 32       # sleep for a second
+ 	li $a0, 1000
+ 	syscall
+
+ 	jal reset_frog
+draw_goal_region_end:
+ 
+ 
+	################################## sleep ##################################
+sleep:	li $v0, 32
+	li $a0, 16
+	syscall
+	j LOOP
+####################################################################################################
+############################################# LOOP END #############################################
+####################################################################################################
+
+################################## detect-retry ##################################
+ detect_retry:
+ 	# sound effect
+ 	li $v0, 33
+ 	li $a0, 70
+ 	li $a1, 400
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+ 	li $v0, 33
+ 	li $a0, 60
+ 	li $a1, 400
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+ 	li $v0, 33
+ 	li $a0, 50
+ 	li $a1, 400
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+ 	li $v0, 33
+ 	li $a0, 40
+ 	li $a1, 400
+ 	li $a2, 1
+ 	li $a3, 127
+ 	syscall 
+
+ re_detect:
+ 	lw $t0, displayAddress 	# $t0 stores the base address for display
+
+ 	addi $a0, $zero, 0 
+ 	addi $a1, $zero, 1024
+ 	li $a2, 0x828282	# $a2 stores the bloody red colour code   
+ 	jal  draw_rect
+
+ 	# keystroke_detection
+ 	lw $t8, 0xffff0000
+ 	bne $t8, 1, re_detect
+
+
+ 	lw $t2, 0xffff0004
+ 	beq $t2, 0x72, respond_to_r
+ 	j re_detect
+
+ respond_to_r:
+ 	addi $t3, $zero, 3
+ 	sw $t3, lives
+ 	j START
+
+
+####################################################################################################
+######################################### Helper Functions #########################################
+####################################################################################################
+
+###############################################################
+# function: draw_rect
+# $a0 = starting pixel to draw
+# $a1 = number of pixels to draw
+# $a2 = color to draw
+draw_rect:	
+	add   $t4, $zero, $zero  
+	sll   $t8, $a0, 2         
+	add   $t8, $t0, $t8       
+draw_rect_loop:	
+	beq   $a1, $t4, end     
+	sll   $t6, $t4, 2         
+	add   $t7, $t8, $t6       
+	sw    $a2, 0($t7)         
+	addi  $t4, $t4, 1         
+	j draw_rect_loop
+end:	jr $ra
+
+
+###############################################################
+# function: draw_a_row
+# $a_0: starting pixel to draw
+# $a_1: the address in the memory where the color is stored
+draw_a_row:	
+	add $t1, $zero, $a0
+	sll $t1, $t1, 2
+	add $t2, $zero, $zero
+	addi $t3, $zero, 128
+	add $t4, $t0, $t1	
+draw_a_row_loop:
+	beq $t3, $t2, draw_a_row_end
+	sll $t5, $t2, 2
+	add $t6, $t5, $t4
+	lw   $t8, 0($a1)
+	sw   $t8, 0($t6)  	
+	addi $a1, $a1, 4  
+	addi $t2, $t2, 1	
+	j draw_a_row_loop	
+draw_a_row_end:
+	jr $ra
+
+
+###############################################################	
+# function: fill_eight_pixels
+# $a_0: address of memery to store in
+# $a_1: color to fill in
+fill_eight_pixels: 
+	add  $t4, $zero, $zero  
+	addi $t5, $zero, 8
+fill_eight_pixels_loop:      
+	beq $t5, $t4, fill_eight_pixels_end
+	sll $t6, $t4, 2 
+	add $t6, $a0, $t6 
+	sw  $a1, 0($t6) 	  
+	addi $t4, $t4, 1
+	j fill_eight_pixels_loop	
+fill_eight_pixels_end:
+	jr $ra
+
+
+###############################################################	
+# function: move_memory_right	
+move_memory_right:
+	add $t0, $a0, $zero
+	addi $t1, $t0, 124
+	lw $t2, 0($t1)
+	add $t1, $zero, 0
+	add $t6, $zero, 32 
+move_memory_right_loop:
+	beq $t6, $t1, move_memory_right_end
+	sll $t3, $t1, 2
+	add $t4, $t3, $t0
+	lw $t5, 0($t4)	
+	sw $t2, 0($t4)
+	add $t2, $t5, $zero	
+	addi $t1, $t1, 1 
+	j move_memory_right_loop	
+move_memory_right_end:	
+	sw $t2, 0($t0)
+	jr $ra
+	
+
+###############################################################		
+# function: move_memory_left	
+move_memory_left:
+	add $t0, $a0, $zero
+	addi $t1, $t0, 0
+	lw $t2, 0($t1)
+	
+	add $t1, $zero, 31
+	add $t6, $zero, -1	
+move_memory_left_loop:   
+	beq $t1, $t6, move_memory_left_end
+	sll $t3, $t1, 2 
+	add $t4, $t3, $t0 
+	lw $t5, 0($t4)
+	
+	sw $t2, 0($t4) 
+	add $t2, $t5, $zero 
+	
+	addi $t1, $t1, -1  
+	j move_memory_left_loop	
+move_memory_left_end:	
+	addi $t0, $t0, 124
+	sw $t2, 0($t0)
+	jr $ra
+	
+
+###############################################################	
+# function: reset_collision_detection 
+# $a0 = color of checking point
+# $a1 = color of vehicle
+# $a2 = color of log
+reset_collision_detection:
+ 	beq   $a0, $a1, reset_collision_detection_body
+ 	bne   $a0, $a2, reset_collision_detection_end
+reset_collision_detection_body:
+ 	sw    $zero, no_collision
+reset_collision_detection_end:
+ 	jr    $ra
+
+
+###############################################################	
+# function: draw_frog 
+# arguments：$a0 = color of frog
+draw_frog:
+ 	lw    $t0, displayAddress 
+ 	lw    $t2, frog_X	 
+ 	lw    $t3, frog_Y	 
+
+ 	# first row of frog
+ 	sll   $t4, $t3, 5   
+ 	add   $t4, $t4, $t2 
+ 	sll   $t5, $t4, 2         
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 	  
+ 	addi  $t7, $t4, 3
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 
+ 		
+ 	# second row of frog
+ 	addi  $t7, $t4, 32
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 	
+ 	addi  $t7, $t4, 33
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 	
+ 	addi  $t7, $t4, 34
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 
+ 	addi  $t7, $t4, 35
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 
+ 		
+ 	# third row of frog
+ 	addi  $t7, $t4, 65
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6)	
+ 	addi  $t7, $t4, 66
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6)
+ 	
+ 	# forth row of frog  
+ 	addi  $t7, $t4, 96  
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 
+ 	addi  $t7, $t4, 97
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 
+ 	addi  $t7, $t4, 98
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6)   
+ 	addi  $t7, $t4, 99 
+ 	sll   $t5, $t7, 2 
+ 	add   $t6, $t5, $t0  	  
+ 	sw    $a1, 0($t6) 
+ 	
+ 	jr $ra
+
+
+###############################################################	
+# fucntion: reset_frog
+reset_frog:
+ 	lw $t3, frog_X_start
+ 	lw $t4, frog_Y_start
+ 	sw $t3, frog_X
+ 	sw $t4, frog_Y
+ 	jr $ra
